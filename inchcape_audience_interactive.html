@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Inchcape — Audience Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #141414;
+  --paper: #F5F2ED;
+  --mid: #6B6560;
+  --rule: #D8D3CB;
+  --hover: #EDE9E3;
+  --a1: #1A3A5C; --a1l: rgba(26,58,92,0.08);
+  --a2: #2D5A3D; --a2l: rgba(45,90,61,0.08);
+  --a3: #7A3B1E; --a3l: rgba(122,59,30,0.08);
+  --a4: #B8860B; --a4l: rgba(184,134,11,0.08);
+  --a5: #5C2D6B; --a5l: rgba(92,45,107,0.08);
+  --a6: #888;    --a6l: rgba(136,136,136,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); font-size: 14px; line-height: 1.6; }
+
+/* ── HEADER ── */
+.header { border-bottom: 2px solid var(--ink); padding: 28px 48px; display: flex; align-items: end; justify-content: space-between; }
+.header-left .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--mid); margin-bottom: 6px; }
+.header-left h1 { font-family: 'DM Serif Display', serif; font-size: 32px; line-height: 1.1; }
+.header-left h1 em { font-style: italic; }
+.header-meta { font-size: 11px; color: var(--mid); text-align: right; line-height: 1.7; }
+
+/* ── NAV ── */
+.nav { display: flex; border-bottom: 1px solid var(--rule); padding: 0 48px; }
+.nav-btn {
+  padding: 14px 0; margin-right: 32px; font-size: 12px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--mid);
+  border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: color .2s, border-color .2s;
+}
+.nav-btn:hover { color: var(--ink); }
+.nav-btn.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+/* ── VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ══════════════════════════
+   VIEW 1: AUDIENCES
+══════════════════════════ */
+.aud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.aud-card {
+  padding: 28px 40px; border-bottom: 1px solid var(--rule); border-right: 1px solid var(--rule);
+  cursor: pointer; transition: background .15s;
+}
+.aud-card:nth-child(even) { border-right: none; }
+.aud-card:hover { background: var(--hover); }
+.aud-card.open { background: var(--hover); }
+
+.aud-flag { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.aud-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.aud-type { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.aud-name { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 6px; line-height: 1.2; }
+.aud-desc { font-size: 12.5px; color: var(--mid); line-height: 1.55; }
+.aud-expand-hint { font-size: 10px; color: var(--mid); margin-top: 12px; display: flex; align-items: center; gap: 4px; }
+.aud-expand-hint .arrow { transition: transform .2s; display: inline-block; }
+.aud-card.open .aud-expand-hint .arrow { transform: rotate(90deg); }
+
+.aud-detail {
+  display: none; padding: 24px 40px 32px; border-bottom: 1px solid var(--rule);
+  background: var(--hover); grid-column: 1 / -1; animation: fadeDown .2s ease;
+}
+.aud-detail.open { display: block; }
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+.detail-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; }
+.detail-col-head { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--mid); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.detail-list { list-style: none; }
+.detail-list li { display: flex; gap: 8px; margin-bottom: 8px; font-size: 12.5px; line-height: 1.45; }
+.detail-list li::before { content: "→"; color: var(--mid); flex-shrink: 0; }
+
+.quote-card { background: white; border-left: 3px solid; padding: 10px 14px; margin-bottom: 10px; border-radius: 0 2px 2px 0; }
+.quote-card p { font-size: 12.5px; line-height: 1.5; font-style: italic; color: var(--ink); }
+.quote-card .attr { font-size: 10px; color: var(--mid); margin-top: 4px; font-style: normal; }
+
+.signal { background: var(--ink); color: var(--paper); padding: 14px 18px; border-radius: 2px; margin-top: 20px; }
+.signal-label { font-size: 9px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; opacity: .5; margin-bottom: 4px; }
+.signal-text { font-size: 12px; line-height: 1.55; opacity: .9; }
+
+/* ══════════════════════════
+   VIEW 2: TENSIONS
+══════════════════════════ */
+.tension-intro { padding: 28px 48px 0; }
+.tension-intro h2 { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 6px; }
+.tension-intro p { font-size: 13px; color: var(--mid); max-width: 680px; }
+
+.tension-list { padding: 20px 48px 0; }
+.tension-row {
+  border: 1px solid var(--rule); border-radius: 4px; margin-bottom: 10px;
+  overflow: hidden; cursor: pointer; transition: border-color .2s;
+}
+.tension-row:hover { border-color: var(--ink); }
+.tension-row.open { border-color: var(--ink); }
+
+.tension-header { display: grid; grid-template-columns: 160px 1fr 1fr auto; gap: 24px; padding: 16px 20px; align-items: center; }
+.tension-topic-label { font-weight: 600; font-size: 13px; }
+.tension-analyst-preview { font-size: 12px; color: var(--a1); }
+.tension-linkedin-preview { font-size: 12px; color: var(--a3); }
+.tension-toggle { font-size: 18px; color: var(--mid); transition: transform .2s; }
+.tension-row.open .tension-toggle { transform: rotate(45deg); }
+
+.tension-body { display: none; border-top: 1px solid var(--rule); }
+.tension-row.open .tension-body { display: block; animation: fadeDown .2s ease; }
+.tension-body-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.tension-col { padding: 24px 28px; }
+.tension-col:first-child { border-right: 1px solid var(--rule); background: var(--a1l); }
+.tension-col:last-child { background: var(--a3l); }
+.tension-col-head { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.tension-col:first-child .tension-col-head { color: var(--a1); border-bottom-color: var(--a1); }
+.tension-col:last-child .tension-col-head { color: var(--a3); border-bottom-color: var(--a3); }
+
+.tension-gap-bar { background: var(--ink); color: var(--paper); padding: 12px 28px; font-size: 12px; line-height: 1.5; }
+.tension-gap-bar strong { font-weight: 600; opacity: .5; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+
+/* ══════════════════════════
+   VIEW 3: EVIDENCE BANK
+══════════════════════════ */
+.evidence-toolbar { padding: 20px 48px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--rule); }
+.tb-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--mid); margin-right: 4px; }
+.filter-btn {
+  padding: 5px 12px; border-radius: 20px; border: 1px solid var(--rule);
+  background: white; font-size: 11px; font-weight: 500; cursor: pointer;
+  color: var(--mid); transition: all .15s; font-family: 'DM Sans', sans-serif;
+}
+.filter-btn:hover { border-color: var(--ink); color: var(--ink); }
+.filter-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.filter-sep { width: 1px; height: 20px; background: var(--rule); margin: 0 4px; }
+
+.search-box {
+  margin-left: auto; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 4px;
+  font-size: 12px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: white;
+  outline: none; width: 220px;
+}
+.search-box:focus { border-color: var(--ink); }
+.search-box::placeholder { color: var(--mid); }
+
+.evidence-count { padding: 10px 48px 6px; font-size: 11px; color: var(--mid); }
+
+.evidence-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 0 48px 40px; }
+.ev-card {
+  background: white; border: 1px solid var(--rule); border-radius: 4px;
+  padding: 16px; border-top: 3px solid; transition: border-color .15s;
+}
+.ev-card:hover { border-color: var(--ink); border-top-color: inherit; }
+.ev-card .ev-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.ev-tag {
+  font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 2px;
+}
+.ev-text { font-size: 12.5px; line-height: 1.5; color: var(--ink); font-style: italic; }
+.ev-attr { font-size: 10.5px; color: var(--mid); margin-top: 8px; font-style: normal; }
+.ev-theme { font-size: 10px; color: var(--mid); margin-top: 6px; }
+
+.no-results { padding: 60px 48px; text-align: center; color: var(--mid); font-size: 13px; grid-column: 1/-1; }
+
+/* ── FOOTER ── */
+.footer { border-top: 1px solid var(--rule); padding: 16px 48px; display: flex; justify-content: space-between; font-size: 11px; color: var(--mid); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="eyebrow">Inchcape plc · Audience Intelligence</div>
+    <h1>Understanding<br><em>Inchcape's key audiences</em></h1>
+  </div>
+  <div class="header-meta">
+    Earnings transcripts: H1 2023 · FY2023 · FY2024 · FY2025<br>
+    LinkedIn: 68 posts · 88 comments · Apr 2025–Apr 2026<br>
+    Headland Consultancy
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchView('audiences')">Audiences</button>
+  <button class="nav-btn" onclick="switchView('tensions')">Channel tensions</button>
+  <button class="nav-btn" onclick="switchView('evidence')">Evidence bank</button>
+</nav>
+
+<!-- ══════════════════
+     VIEW 1: AUDIENCES
+══════════════════ -->
+<div class="view active" id="view-audiences">
+  <div class="aud-grid" id="aud-grid">
+
+    <div class="aud-card" onclick="toggleAud(0)" data-idx="0">
+      <div class="aud-flag"><div class="aud-dot" style="background:var(--a1)"></div><div class="aud-type" style="color:var(--a1)">Earnings calls</div></div>
+      <div class="aud-name">Institutional analysts &amp; fund managers</div>
+      <div class="aud-desc">Peel Hunt, JPMorgan, BNP Paribas Exane, Berenberg, Deutsche Bank, HSBC, Citi, UBS, Barclays, Bank of America, Liberum. Proxy for the institutional shareholder base — they read across every word of every result.</div>
+      <div class="aud-expand-hint"><span class="arrow">›</span> Click to explore evidence</div>
+    </div>
+
+    <div class="aud-card" onclick="toggleAud(1)" data-idx="1">
+      <div class="aud-flag"><div class="aud-dot" style="background:var(--a2)"></div><div class="aud-type" style="color:var(--a2)">LinkedIn comments</div></div>
+      <div class="aud-name">OEM partners &amp; automotive industry</div>
+      <div class="aud-desc">Named OEM contacts, industry operators and automotive professionals who engage publicly. These are the relationships Inchcape's entire model depends on — and several speak up unprompted.</div>
+      <div class="aud-expand-hint"><span class="arrow">›</span> Click to explore evidence</div>
+    </div>
+
+    <!-- Detail panel 0-1 -->
+    <div class="aud-detail" id="aud-detail-0-1">
+      <div class="detail-cols">
+        <div>
+          <div class="detail-col-head">Recurring question themes — analysts</div>
+          <ul class="detail-list">
+            <li>Chile and Colombia market recovery — raised at every call since H1 2023</li>
+            <li>Capital allocation — buybacks vs M&A, leverage trajectory, when does deleveraging end</li>
+            <li>Chinese OEM exposure — from opportunity (2023) to disintermediation risk (2026)</li>
+            <li>Margin normalisation — Europe, APAC, Americas through the cycle</li>
+            <li>Contract win maturity — when do they translate to revenue</li>
+            <li>Free cash flow conversion quality — working capital sustainability</li>
+            <li>VLS / aftersales — when does it become a meaningful profit contribution</li>
+          </ul>
+        </div>
+        <div>
+          <div class="detail-col-head">OEM partner voices — LinkedIn</div>
+          <div class="quote-card" style="border-color:var(--a2)">
+            <p>"Congratulations Inchcape plc on this acquisition and welcome on board as Daimler Buses GmbH's general distributor for Iceland! We are looking forward to continuing the excellent collaboration."</p>
+            <div class="attr">Thomas Tonger, Head of Sales Europe, Daimler Buses — Iceland acquisition post</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a2)">
+            <p>"Inchcape is now a world class conglomerate. I have nothing but respect and admiration for the organisation and proud to have been an Inchcape member for more than 20 years."</p>
+            <div class="attr">ILIAS KOSMAS, COO, OPAP Group — FY25 results follow-up post</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a2)">
+            <p>Comment on the Athens Leadership Conference post, engaging with the OEM partnership content.</p>
+            <div class="attr">María Cristina Torquatti, Mercedes-Benz Argentina &amp; LATAM</div>
+          </div>
+        </div>
+        <div>
+          <div class="detail-col-head">Verbatim analyst questions</div>
+          <div class="quote-card" style="border-color:var(--a1)">
+            <p>"Are you effectively walking away from the £50m profit target for VLS at this stage?"</p>
+            <div class="attr">Andy Grobler, BNP Paribas Exane — FY2023</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a1)">
+            <p>"Why don't those APAC competitive characteristics play out as Chinese OEMs develop further in your other locations?"</p>
+            <div class="attr">Timothy Ramskill, Bank of America — FY2025</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a1)">
+            <p>"In a year where you underperform on free cash, are you willing to borrow to fund share buybacks?"</p>
+            <div class="attr">Andrew Nussey, Peel Hunt — FY2024</div>
+          </div>
+        </div>
+      </div>
+      <div class="signal">
+        <div class="signal-label">Strategic signal</div>
+        <div class="signal-text">Analysts are not served by LinkedIn — but the gaps they probe (capital-light thesis, OEM disintermediation risk, cash conversion quality) are precisely what LinkedIn fails to argue. OEM partner voices on LinkedIn are rare but extremely high-value. Thomas Tonger's comment is worth more than any branded OEM post.</div>
+      </div>
+    </div>
+
+    <div class="aud-card" onclick="toggleAud(2)" data-idx="2">
+      <div class="aud-flag"><div class="aud-dot" style="background:var(--a3)"></div><div class="aud-type" style="color:var(--a3)">LinkedIn comments</div></div>
+      <div class="aud-name">Current &amp; former employees</div>
+      <div class="aud-desc">One of the most active commenter groups — spanning senior leaders, market-level operators and former employees including one with a sustained, public grievance. The internal audience is not passive.</div>
+      <div class="aud-expand-hint"><span class="arrow">›</span> Click to explore evidence</div>
+    </div>
+
+    <div class="aud-card" onclick="toggleAud(3)" data-idx="3">
+      <div class="aud-flag"><div class="aud-dot" style="background:var(--a4)"></div><div class="aud-type" style="color:var(--a4)">LinkedIn comments</div></div>
+      <div class="aud-name">Broader business &amp; financial community</div>
+      <div class="aud-desc">Peer CEOs, former board-era figures, financial professionals and adjacent industry operators. Engage around corporate milestones and strategy — a credibility signal when they appear.</div>
+      <div class="aud-expand-hint"><span class="arrow">›</span> Click to explore evidence</div>
+    </div>
+
+    <!-- Detail panel 2-3 -->
+    <div class="aud-detail" id="aud-detail-2-3">
+      <div class="detail-cols">
+        <div>
+          <div class="detail-col-head">Senior internal voices</div>
+          <div class="quote-card" style="border-color:var(--a3)">
+            <p>"Accelerate+ is not just a speech, you really feel and live it day to day and it truly guides the daily actions and north of each one of us. Proudly Inchcaper."</p>
+            <div class="attr">Lucas B., Inchcape Américas — Jan 2026</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a3)">
+            <p>Extended comment on customer centricity philosophy — effectively amplifying the post with internal expertise.</p>
+            <div class="attr">Nicolás Contreras Carmona, CCO-level, Inchcape Chile</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a3)">
+            <p>"Amazing job..well done !!"</p>
+            <div class="attr">Philip Jenkins, CEO APAC — Américas award post, May 2025</div>
+          </div>
+        </div>
+        <div>
+          <div class="detail-col-head">⚠ Reputational flag — sustained public grievance</div>
+          <div class="quote-card" style="border-color:#c0392b">
+            <p>"It's a shame this isn't the case in INCHCAPE Colombia... the pressure was so great that I decided to abandon many years of work and training. Many things happen internally in the truck and van after-sales department without senior management noticing the injustices caused by harassment, abuse of power, and intimidation."</p>
+            <div class="attr">Mauricio Ariza Murillo — commented on 5 separate posts, Aug–Dec 2025. Long, named, in English. Visible to all followers.</div>
+          </div>
+          <ul class="detail-list" style="margin-top:12px">
+            <li>Posted on: World Mental Health Day, D&I, colleague, H1 results, digital tools</li>
+            <li>Pattern spans 5 months across different content themes</li>
+            <li>Not addressed publicly in any post</li>
+          </ul>
+        </div>
+        <div>
+          <div class="detail-col-head">Business community — named engagers</div>
+          <div class="quote-card" style="border-color:var(--a4)">
+            <p>"Congratulations on the progress against the Accelerate+ strategy!"</p>
+            <div class="attr">Darren Leigh, CEO Unipart — H1 2025 results video. Rare peer CEO public engagement.</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a4)">
+            <p>"Congratulations Team Inchcape to this very nice acquisition in Europe."</p>
+            <div class="attr">Stefan Bomhard, Retired CEO Imperial Brands — Iceland announcement</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a4)">
+            <p>"Congratulations Duncan and team. Best wishes."</p>
+            <div class="attr">James Brearley, Former Inchcape UK CEO — Iceland announcement</div>
+          </div>
+        </div>
+      </div>
+      <div class="signal">
+        <div class="signal-label">Strategic signal</div>
+        <div class="signal-text">The internal audience reads, shares and comments — and their voice either amplifies or undermines the brand narrative. The Ariza Murillo situation is a sustained reputational pattern across 5 months that demands a monitoring response. The business community only engages around moments of strategic significance — M&A, results — not routine content.</div>
+      </div>
+    </div>
+
+    <div class="aud-card" onclick="toggleAud(4)" data-idx="4">
+      <div class="aud-flag"><div class="aud-dot" style="background:var(--a5)"></div><div class="aud-type" style="color:var(--a5)">LinkedIn comments</div></div>
+      <div class="aud-name">Critics, market observers &amp; noise</div>
+      <div class="aud-desc">Substantive industry critics providing expert pushback; negative market observers from Chile and Colombia post-Derco; and irrelevant spam. Each requires a different response posture.</div>
+      <div class="aud-expand-hint"><span class="arrow">›</span> Click to explore evidence</div>
+    </div>
+
+    <div class="aud-card" onclick="toggleAud(5)" data-idx="5">
+      <div class="aud-flag"><div class="aud-dot" style="background:var(--a6)"></div><div class="aud-type" style="color:var(--a6)">LinkedIn comments</div></div>
+      <div class="aud-name">Early-career &amp; talent community</div>
+      <div class="aud-desc">Students, interns and early-career professionals engaging on careers, diversity and people content. Activated by the 10,000 Interns Foundation partnership and the Aspire programme.</div>
+      <div class="aud-expand-hint"><span class="arrow">›</span> Click to explore evidence</div>
+    </div>
+
+    <!-- Detail panel 4-5 -->
+    <div class="aud-detail" id="aud-detail-4-5">
+      <div class="detail-cols">
+        <div>
+          <div class="detail-col-head">Substantive critics — worth engaging</div>
+          <div class="quote-card" style="border-color:var(--a5)">
+            <p>"The post misses industrial supply, tech dependence, and real-world EV issues... European automakers are still struggling to make EVs profitable, and inflation isn't helping. Europe is way too dependent on China for LFP and NMC batteries... compromising its industrial sovereignty."</p>
+            <div class="attr">IBTISSAM ABOUL, Distribution Network Controller, Auto Hall — NEV adoption post. A genuine industry expert disagreeing thoughtfully.</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a5)">
+            <p>"LA ADQUISICIÓN DE DERCO FUE LA GRAN MIERDA DE LA HISTORIA" [The Derco acquisition was the worst deal in history]</p>
+            <div class="attr">Matias Vasquez Osores — Derco integration post. Likely former dealer or market participant.</div>
+          </div>
+        </div>
+        <div>
+          <div class="detail-col-head">Early-career voices</div>
+          <div class="quote-card" style="border-color:var(--a6)">
+            <p>"This session was wonderful and the insights I have gained are invaluable. Thanks to everyone at Inchcape who made this opportunity possible!"</p>
+            <div class="attr">Louise Edwards, University of Nottingham — 10,000 Interns post</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a6)">
+            <p>"Thank you for such an engaging and insightful session! It was great to learn more about the culture and opportunities at Inchcape."</p>
+            <div class="attr">Vanessa Ajawobu, MSc Finance, Audit Associate</div>
+          </div>
+          <div class="quote-card" style="border-color:var(--a6)">
+            <p>"A company to be a part of. Define must."</p>
+            <div class="attr">Glenn Jones, Global HR Consultant</div>
+          </div>
+        </div>
+        <div>
+          <div class="detail-col-head">Noise — spam &amp; irrelevant</div>
+          <ul class="detail-list">
+            <li>PR agency sales pitch posted on Iceland acquisition (Zhanna Solonenko / OBA PR)</li>
+            <li>Fiverr digital marketing promotion on NEV post</li>
+            <li>Recurring emoji-only commenter (LY Lim) across 7+ posts — affirmative but content-free</li>
+          </ul>
+          <div class="signal" style="margin-top:16px">
+            <div class="signal-label">Strategic signal</div>
+            <div class="signal-text">IBTISSAM ABOUL's critique is an asset if engaged — it demonstrates thought leadership. The Chilean/Derco dissent mirrors analyst concerns about market sentiment. Treat as listening posts, not threats. Early-career engagement is genuine but shallow — activate further through employer brand content.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════
+     VIEW 2: TENSIONS
+══════════════════ -->
+<div class="view" id="view-tensions">
+  <div class="tension-intro">
+    <h2>Where the two channels diverge</h2>
+    <p>The same topics surface very differently in analyst Q&amp;A and LinkedIn comments. Click any row to see verbatim evidence from both channels side by side.</p>
+  </div>
+  <div class="tension-list" id="tension-list"></div>
+</div>
+
+
+<!-- ══════════════════
+     VIEW 3: EVIDENCE BANK
+══════════════════ -->
+<div class="view" id="view-evidence">
+  <div class="evidence-toolbar">
+    <span class="tb-label">Source</span>
+    <button class="filter-btn active" data-filter="source" data-val="all" onclick="setFilter('source','all',this)">All</button>
+    <button class="filter-btn" data-filter="source" data-val="analyst" onclick="setFilter('source','analyst',this)">Analyst Q&amp;A</button>
+    <button class="filter-btn" data-filter="source" data-val="linkedin" onclick="setFilter('source','linkedin',this)">LinkedIn comments</button>
+    <div class="filter-sep"></div>
+    <span class="tb-label">Theme</span>
+    <button class="filter-btn active" data-filter="theme" data-val="all" onclick="setFilter('theme','all',this)">All</button>
+    <button class="filter-btn" data-filter="theme" data-val="capital" onclick="setFilter('theme','capital',this)">Capital model</button>
+    <button class="filter-btn" data-filter="theme" data-val="oem" onclick="setFilter('theme','oem',this)">OEM partnerships</button>
+    <button class="filter-btn" data-filter="theme" data-val="latam" onclick="setFilter('theme','latam',this)">Chile &amp; LatAm</button>
+    <button class="filter-btn" data-filter="theme" data-val="china" onclick="setFilter('theme','china',this)">Chinese OEMs</button>
+    <button class="filter-btn" data-filter="theme" data-val="nev" onclick="setFilter('theme','nev',this)">NEV transition</button>
+    <button class="filter-btn" data-filter="theme" data-val="people" onclick="setFilter('theme','people',this)">People &amp; culture</button>
+    <input class="search-box" type="text" placeholder="Search quotes…" id="search-input" oninput="renderEvidence()">
+  </div>
+  <div class="evidence-count" id="evidence-count"></div>
+  <div class="evidence-grid" id="evidence-grid"></div>
+</div>
+
+<div class="footer">
+  <div>Inchcape plc · Audience Intelligence · Headland Consultancy</div>
+  <div>Sources: Refinitiv/LSEG earnings transcripts · LinkedIn dataset Apr 2025–Apr 2026</div>
+</div>
+
+<script>
+// ─────────────────────────────────────
+// DATA
+// ─────────────────────────────────────
+const TENSIONS = [
+  {
+    topic: "Chile &amp; LatAm",
+    analystPreview: "Market recovery timeline, TIV, margin through the cycle — asked at every call",
+    linkedinPreview: "Former employees call Derco 'the worst purchase ever made'",
+    analystQuotes: [
+      { text: "Can you drill into Chile and Colombia — what are your planning assumptions for FY24 and how does that compare to industry forecasts?", attr: "Andrew Nussey, Peel Hunt — FY2023" },
+      { text: "In the Americas and specifically Chile — to what extent is there a need to put investment in to support that growth? Could that act as a near-term margin headwind?", attr: "Andrew Nussey, Peel Hunt — FY2024" },
+      { text: "On the Chilean market — your thoughts on TIV there, the penetration of your brands and the ability to keep scaling margin in that geography?", attr: "Andrew Nussey, Peel Hunt — FY2025" },
+      { text: "Americas: the margin fell from 7.5% to 5% H1 to H2 on a very similar top line. How should we think about those margins as we head into 2024?", attr: "Akshat Kacker, JPMorgan — FY2023" }
+    ],
+    linkedinQuotes: [
+      { text: "LA ADQUISICIÓN DE DERCO FUE LA GRAN MIERDA DE LA HISTORIA [The Derco acquisition was the worst deal in history]", attr: "Matias Vasquez Osores — Derco integration post, Dec 2025" },
+      { text: "LA PEOR COMPRA QUE HICIERON [The worst purchase they ever made]", attr: "Matias Vasquez Osores — Derco anniversary post, Dec 2025" },
+      { text: "It's a shame this isn't the case in INCHCAPE Colombia. The pressure was so great that I decided to abandon many years of work and training...", attr: "Mauricio Ariza Murillo, former Inchcape Colombia — World Mental Health Day post, Nov 2025" }
+    ],
+    gap: "The local market reality and the investor thesis are not in dialogue with each other"
+  },
+  {
+    topic: "Capital model",
+    analystPreview: "Capital-light thesis, cash conversion, buybacks vs M&A — technically demanding",
+    linkedinPreview: "Almost no engagement with the financial model across 68 posts",
+    analystQuotes: [
+      { text: "Are you prioritising deleveraging the balance sheet? At what level of leverage does that no longer become the priority?", attr: "Paul Rossington, HSBC — FY2023" },
+      { text: "In a year where you have underperformed in terms of free cash generation, are you willing to borrow to fund share buybacks?", attr: "Andrew Nussey, Peel Hunt — FY2024" },
+      { text: "On your commitment to ongoing share buybacks — does that mean buybacks every year with the quantum varying, or decided annually?", attr: "Andy Grobler, BNP Paribas Exane — FY2024" },
+      { text: "On incentive schemes — what are the weightings and where does free cash flow sit within the scheme?", attr: "Andy Grobler, BNP Paribas Exane — FY2024" }
+    ],
+    linkedinQuotes: [
+      { text: "Today we shared our FY25 results: double-digit EPS growth supported by the strength of our diversified business. A new £175m share buyback announced.", attr: "Inchcape company post — Mar 2026 (266 likes, 27 shares — highest-sharing post in dataset)" },
+      { text: "Adrian Lewis, our CFO, shares his perspective on the shareholder returns we have delivered, and how our capital allocation priorities are supporting long-term growth and value creation.", attr: "Inchcape company post — H1 2025 CFO video (177 likes — only dedicated capital model post)" }
+    ],
+    gap: "Inchcape's most distinctive investment attribute is invisible to its LinkedIn audience — only 6 of 68 posts touch the capital model"
+  },
+  {
+    topic: "Chinese OEMs",
+    analystPreview: "Framed as disintermediation risk by 2026: 'Why won't what happened with BYD happen elsewhere?'",
+    linkedinPreview: "Commenters engage positively with Chinese brand announcements — BYD risk invisible",
+    analystQuotes: [
+      { text: "You are now the leading independent distributor of Chinese vehicles. What is your current exposure and how do you size the opportunity in the medium term?", attr: "Akshat Kacker, JPMorgan — FY2023" },
+      { text: "Why don't those APAC competitive dynamics play out as Chinese OEMs continue to develop further in your other locations?", attr: "Timothy Ramskill, Bank of America — FY2025" },
+      { text: "Can you explain how the BYD contract differs from others in your portfolio? And why are you confident in the longer-term relationships with Changan or GAC?", attr: "Abi Bell, UBS — FY2025" },
+      { text: "Do you think that contract terminations might be OEMs looking to go direct rather than using a distributor?", attr: "Andrew Nussey, Peel Hunt — FY2024" }
+    ],
+    linkedinQuotes: [
+      { text: "With the permission of our CCO Romeo Lacerda, I'll like to share my vision. At Inchcape, customer centricity is not just a strategy — it's the core of who we are. Today, the availability of data and insights allows us to take this commitment even further.", attr: "Nicolás Contreras Carmona, Inchcape Chile CCO-level — customer experience post, Sep 2025" },
+      { text: "Great to see the focus on global automotive trends. The way Inchcape is leveraging its DAP and DXP platforms to personalise the NEV journey is a game-changer for markets like South America.", attr: "Dario Nocioni, Digital Commerce Executive — S&P Global Mobility post, Dec 2025" }
+    ],
+    gap: "OEM disintermediation risk is live in IR but invisible in editorial. A strategic post on Inchcape's OEM portfolio philosophy would serve both audiences."
+  },
+  {
+    topic: "People &amp; culture",
+    analystPreview: "Only surfaces via remuneration questions — EPS alignment, LTIP weighting",
+    linkedinPreview: "Highest engagement theme AND highest reputational vulnerability simultaneously",
+    analystQuotes: [
+      { text: "On incentive schemes — you're incentivised on long-term targets. Could you tell us what those weightings are and where free cash flow sits within that scheme?", attr: "Andy Grobler, BNP Paribas Exane — FY2024" },
+      { text: "Our RemCo chair wrote to shareholders to consult on an accelerate booster EPS scheme for the top 300 executives.", attr: "Duncan Tait response — FY2024 (management referencing internal people architecture)" }
+    ],
+    linkedinQuotes: [
+      { text: "It's a shame this isn't the case in INCHCAPE Colombia. Many things happen internally in the truck and van after-sales department without senior management noticing the injustices caused by harassment, abuse of power, and intimidation.", attr: "Mauricio Ariza Murillo — commented on 5 posts, Aug–Dec 2025. Long, named, in English." },
+      { text: "I wish that spirit were truly the DNA of the entire organization. At Inchcape Colombia, however, the success of standout programs is limited by leadership that prioritizes personal agendas over the team.", attr: "Mauricio Ariza Murillo — Inclusion & Diversity post, Dec 2025" },
+      { text: "'Diversity is a superpower for our business' — Inchcape's Group Chief Executive Duncan Tait, in conversation with Sarah...", attr: "Inchcape post — Nov 2025 (165 likes, 15 shares — one of highest-performing posts)" }
+    ],
+    gap: "Culture is Inchcape's highest-engagement content theme and its highest reputational vulnerability simultaneously"
+  },
+  {
+    topic: "OEM partnerships",
+    analystPreview: "Probed commercially: contract maturity, revenue timing, minimum viable returns, OEMs going direct",
+    linkedinPreview: "OEM partner voices are available and willing — but not being used strategically",
+    analystQuotes: [
+      { text: "Were the contract wins new markets for the OEMs themselves, or did you win them from incumbents?", attr: "James Zaremba, Barclays — H1 2023" },
+      { text: "On the contracts from 140–150 to north of 230 — has there been a flavour change? Have you moved from bigger contracts to more numerous smaller ones?", attr: "Charlie Rothbarth, HSBC — FY2024" },
+      { text: "Is there a minimum level below which it is not economic for you to act as a distributor?", attr: "David Brockton, Deutsche Bank — FY2025" },
+      { text: "A few more contract wins in 2025 — can you talk us through the tailwinds you're seeing from completed deals into 2026?", attr: "Andy Grobler, BNP Paribas Exane — FY2025" }
+    ],
+    linkedinQuotes: [
+      { text: "Congratulations Inchcape plc on this acquisition and welcome on board as Daimler Buses GmbH's general distributor for Iceland! We are looking forward to continuing the excellent collaboration and to further building on the very strong market presence Bílaumboðið Askja and Landfari have created.", attr: "Thomas Tonger, Head of Sales Europe, Daimler Buses — Iceland acquisition, Jul 2025" },
+      { text: "'Our partners need a Distributor they can trust, and they trust Inchcape because of our strength, experience and talented people.' This quote from one of our OEM partners captures something we hear again and again.", attr: "Inchcape post — Dec 2025 (191 likes)" },
+      { text: "Me encanta [I love this]", attr: "María Cristina Torquatti, Mercedes-Benz Argentina — Athens Leadership Conference post, Jun 2025" }
+    ],
+    gap: "Thomas Tonger's comment is the most valuable piece of third-party endorsement in the dataset. OEM voices are not being cultivated."
+  },
+  {
+    topic: "NEV transition",
+    analystPreview: "Market-specific: COE cycle in Singapore, BEV penetration APAC, multi-powertrain, which markets win",
+    linkedinPreview: "Drivers of Change report drives genuine expert debate — this audience wants to be argued with",
+    analystQuotes: [
+      { text: "On Singapore — is the recovery simply a function of COE prices still being too high, or is there something else behind that?", attr: "Sanjay Vidyarthi, Liberum — H1 2023" },
+      { text: "How do you manage the BEV adoption dynamic in APAC, where you're seeing Chinese brands grow share rapidly — and why wouldn't the same happen in your other regions?", attr: "Timothy Ramskill, Bank of America — FY2025" },
+      { text: "In terms of markets as a whole — which are performing above historical norms and which below?", attr: "Arthur Truslove, Citi — FY2025" }
+    ],
+    linkedinQuotes: [
+      { text: "The post misses industrial supply, tech dependence, and real-world EV issues. European automakers are still struggling to make EVs profitable... Europe is way too dependent on China for LFP and NMC batteries, cathodes, and rare earth metals, compromising its industrial sovereignty.", attr: "IBTISSAM ABOUL, Distribution Network Controller, Auto Hall — NEV adoption post, Mar 2026" },
+      { text: "This is a timely and important discussion. The automotive industry's shift toward lower-carbon mobility continues to be shaped by regulatory frameworks, evolving consumer expectations, and rapid technological innovation.", attr: "Ingrid Vivian B., Global Logistics professional — Drivers of Change post, Sep 2025" },
+      { text: "The shift to New Energy Vehicles (NEVs) is well underway - but Inchcape's Drivers of Change report shows that for many consumers, affordability, infrastructure and incentives remain the real barriers.", attr: "Inchcape post — Sep 2025 (87 likes)" }
+    ],
+    gap: "The Drivers of Change report has a ready expert audience on LinkedIn. The content is under-exploited as an argued point of view."
+  }
+];
+
+const EVIDENCE = [
+  // ANALYST — CAPITAL
+  { source: 'analyst', theme: 'capital', color: '#1A3A5C', audience: 'Institutional analysts', text: "Are you prioritising deleveraging? At what level of leverage does that no longer become the priority?", attr: "Paul Rossington, HSBC — FY2023 earnings call" },
+  { source: 'analyst', theme: 'capital', color: '#1A3A5C', audience: 'Institutional analysts', text: "In a year where you have underperformed in terms of free cash generation, are you willing to borrow to fund share buybacks?", attr: "Andrew Nussey, Peel Hunt — FY2024 earnings call" },
+  { source: 'analyst', theme: 'capital', color: '#1A3A5C', audience: 'Institutional analysts', text: "On incentive schemes — what are the weightings and where does free cash flow sit?", attr: "Andy Grobler, BNP Paribas Exane — FY2024 earnings call" },
+  { source: 'analyst', theme: 'capital', color: '#1A3A5C', audience: 'Institutional analysts', text: "Commitment to ongoing share buybacks — does that mean buybacks every year? The quantum changes?", attr: "Andy Grobler, BNP Paribas Exane — FY2024 earnings call" },
+  { source: 'analyst', theme: 'capital', color: '#1A3A5C', audience: 'Institutional analysts', text: "On working capital — how much more meaningfully is there to do? Or should we think of this as now normalised?", attr: "James Bayliss, Berenberg — FY2024 earnings call" },
+  // ANALYST — OEM
+  { source: 'analyst', theme: 'oem', color: '#1A3A5C', audience: 'Institutional analysts', text: "Were the contract wins new markets for the OEMs themselves, or won from incumbents? If the latter, what were the OEMs looking for?", attr: "James Zaremba, Barclays — H1 2023 earnings call" },
+  { source: 'analyst', theme: 'oem', color: '#1A3A5C', audience: 'Institutional analysts', text: "Are you effectively walking away from the £50m profit target for VLS at this stage?", attr: "Andy Grobler, BNP Paribas Exane — FY2023 earnings call" },
+  { source: 'analyst', theme: 'oem', color: '#1A3A5C', audience: 'Institutional analysts', text: "Is there a minimum level below which it is not economic for you to act as a distributor?", attr: "David Brockton, Deutsche Bank — FY2025 earnings call" },
+  { source: 'analyst', theme: 'oem', color: '#1A3A5C', audience: 'Institutional analysts', text: "On contracts from 140-150 to north of 230 — has there been a flavour change? Have you moved to more numerous smaller contracts?", attr: "Charlie Rothbarth, HSBC — FY2024 earnings call" },
+  { source: 'analyst', theme: 'oem', color: '#1A3A5C', audience: 'Institutional analysts', text: "Do you expect more mutual terminations? And might those be OEMs looking to go direct rather than use a distributor?", attr: "Andrew Nussey, Peel Hunt — FY2024 earnings call" },
+  // ANALYST — LATAM
+  { source: 'analyst', theme: 'latam', color: '#1A3A5C', audience: 'Institutional analysts', text: "Can you drill into Chile and Colombia — planning assumptions for FY24 vs industry forecasts?", attr: "Andrew Nussey, Peel Hunt — FY2023 earnings call" },
+  { source: 'analyst', theme: 'latam', color: '#1A3A5C', audience: 'Institutional analysts', text: "Impact of the Chilean peso — it's been falling significantly vs the pound. What impact on PBT as we look into 2024?", attr: "Arthur Truslove, Citi — FY2023 earnings call" },
+  { source: 'analyst', theme: 'latam', color: '#1A3A5C', audience: 'Institutional analysts', text: "Americas margin fell from 7.5% to 5% H1 to H2 on a similar top line. How should we think about those margins heading into 2024?", attr: "Akshat Kacker, JPMorgan — FY2023 earnings call" },
+  { source: 'analyst', theme: 'latam', color: '#1A3A5C', audience: 'Institutional analysts', text: "On Chile — thoughts on TIV, penetration of your brands, and the ability to keep scaling margin in that geography?", attr: "Andrew Nussey, Peel Hunt — FY2025 earnings call" },
+  // ANALYST — CHINA
+  { source: 'analyst', theme: 'china', color: '#1A3A5C', audience: 'Institutional analysts', text: "You are now the leading independent distributor of Chinese vehicles. What is your current exposure and how do you size the opportunity in the medium term?", attr: "Akshat Kacker, JPMorgan — FY2023 earnings call" },
+  { source: 'analyst', theme: 'china', color: '#1A3A5C', audience: 'Institutional analysts', text: "Why don't those APAC competitive dynamics play out as Chinese OEMs develop further in your other locations?", attr: "Timothy Ramskill, Bank of America — FY2025 earnings call" },
+  { source: 'analyst', theme: 'china', color: '#1A3A5C', audience: 'Institutional analysts', text: "Can you explain why you're confident in longer-term relationships like Changan or GAC, versus the BYD situation?", attr: "Abi Bell, UBS — FY2025 earnings call" },
+  { source: 'analyst', theme: 'china', color: '#1A3A5C', audience: 'Institutional analysts', text: "On Geely — does the recent exit mark a full stop to distributing Geely vehicles?", attr: "Akshat Kacker, JPMorgan — FY2025 earnings call" },
+  // ANALYST — NEV
+  { source: 'analyst', theme: 'nev', color: '#1A3A5C', audience: 'Institutional analysts', text: "On Singapore — is the delay to 2024 simply a function of COE prices being too high, or is there something else?", attr: "Sanjay Vidyarthi, Liberum — H1 2023 earnings call" },
+  { source: 'analyst', theme: 'nev', color: '#1A3A5C', audience: 'Institutional analysts', text: "Is the product life cycle going to be a bigger issue given the powertrain shift, or less of an issue?", attr: "Mike Allen, Zeus Capital — H1 2023 earnings call" },
+  { source: 'analyst', theme: 'nev', color: '#1A3A5C', audience: 'Institutional analysts', text: "In terms of markets as a whole — which are performing above historical norms and which below?", attr: "Arthur Truslove, Citi — FY2025 earnings call" },
+  // ANALYST — PEOPLE
+  { source: 'analyst', theme: 'people', color: '#1A3A5C', audience: 'Institutional analysts', text: "On incentive schemes — you talked about being incentivised on long-term targets with a weighting towards EPS. What are those weightings?", attr: "Andy Grobler, BNP Paribas Exane — FY2024 earnings call" },
+
+  // LINKEDIN — OEM PARTNERS
+  { source: 'linkedin', theme: 'oem', color: '#2D5A3D', audience: 'OEM partners', text: "Congratulations Inchcape plc on this acquisition and welcome on board as Daimler Buses GmbH's general distributor for Iceland! We are looking forward to continuing the excellent collaboration and to further building on the very strong market presence Bílaumboðið Askja and Landfari have created.", attr: "Thomas Tonger, Head of Sales Europe, Daimler Buses — Jul 2025" },
+  { source: 'linkedin', theme: 'oem', color: '#2D5A3D', audience: 'OEM partners', text: "Inchcape is now a world class conglomerate. I have nothing but respect and admiration for the organisation and proud to have been an Inchcape member for more than 20 years.", attr: "ILIAS KOSMAS, COO, OPAP Group — Mar 2026" },
+  { source: 'linkedin', theme: 'oem', color: '#2D5A3D', audience: 'OEM partners', text: "Me encanta [I love this]", attr: "María Cristina Torquatti, Mercedes-Benz Argentina & LATAM — Jun 2025" },
+
+  // LINKEDIN — EMPLOYEES (positive)
+  { source: 'linkedin', theme: 'people', color: '#7A3B1E', audience: 'Employees', text: "Accelerate+ is not just a speech, you really feel and live it day to day and it truly guides the daily actions and north of each one of us. Proudly Inchcaper.", attr: "Lucas B., Inchcape Américas — Jan 2026" },
+  { source: 'linkedin', theme: 'people', color: '#7A3B1E', audience: 'Employees', text: "Proud to be part of a company committed to driving meaningful, positive change. The latest Sustainability Report is a great reflection of the progress we've made.", attr: "Chloe Fraser, Communications Professional — May 2025" },
+  { source: 'linkedin', theme: 'people', color: '#7A3B1E', audience: 'Employees', text: "Amazing job..well done !!", attr: "Philip Jenkins, CEO APAC — May 2025" },
+  { source: 'linkedin', theme: 'people', color: '#7A3B1E', audience: 'Employees', text: "Fantastic initiative!", attr: "Liz Brown, Chief Strategy & Sustainability Officer — Jan 2026" },
+
+  // LINKEDIN — EMPLOYEES (critical)
+  { source: 'linkedin', theme: 'people', color: '#7A3B1E', audience: 'Employees (critical)', text: "It's a shame this isn't the case in INCHCAPE Colombia. The pressure was so great that I decided to abandon many years of work and training. Many things happen internally in the truck and van after-sales department without senior management noticing the injustices caused by harassment, abuse of power, and intimidation.", attr: "Mauricio Ariza Murillo, former Inchcape Colombia — Nov 2025 (one of five similar comments)" },
+  { source: 'linkedin', theme: 'people', color: '#7A3B1E', audience: 'Employees (critical)', text: "I wish that spirit were truly the DNA of the entire organization. At Inchcape Colombia, the success of standout programs is limited by leadership that prioritizes personal agendas over the team.", attr: "Mauricio Ariza Murillo — Dec 2025" },
+
+  // LINKEDIN — BUSINESS COMMUNITY
+  { source: 'linkedin', theme: 'capital', color: '#B8860B', audience: 'Business community', text: "Congratulations on the progress against the Accelerate+ strategy!", attr: "Darren Leigh, CEO Unipart — H1 2025 results video, Jul 2025" },
+  { source: 'linkedin', theme: 'oem', color: '#B8860B', audience: 'Business community', text: "Congratulations Team Inchcape to this very nice acquisition in Europe.", attr: "Stefan Bomhard, Retired CEO Imperial Brands — Iceland announcement, Jul 2025" },
+  { source: 'linkedin', theme: 'latam', color: '#B8860B', audience: 'Business community', text: "En menos de cuatro años, el ecosistema del retail automotriz pasó de ser un mercado fragmentado y local a un tablero dominado por jugadores globales. Lo que antes era un mercado de relaciones, hoy es un mercado de eficiencia, escala y rentabilidad. [In less than four years, the automotive retail ecosystem shifted from a fragmented local market to one dominated by global players. What was once a relationship market is now one of efficiency, scale and profitability.]", attr: "Juan Eduardo Contreras, Chilean automotive strategist — Dec 2025. Substantive external validation of Inchcape's strategy." },
+
+  // LINKEDIN — CRITICS
+  { source: 'linkedin', theme: 'nev', color: '#5C2D6B', audience: 'Critics & observers', text: "The post misses industrial supply, tech dependence, and real-world EV issues. European automakers are still struggling to make EVs profitable. Europe is way too dependent on China for LFP and NMC batteries, compromising its industrial sovereignty.", attr: "IBTISSAM ABOUL, Distribution Network Controller, Auto Hall — Mar 2026" },
+  { source: 'linkedin', theme: 'latam', color: '#5C2D6B', audience: 'Critics & observers', text: "LA ADQUISICIÓN DE DERCO FUE LA GRAN MIERDA DE LA HISTORIA [The Derco acquisition was the worst deal in history]", attr: "Matias Vasquez Osores — Dec 2025, Derco anniversary post" },
+  { source: 'linkedin', theme: 'nev', color: '#5C2D6B', audience: 'Critics & observers', text: "This is a timely and important discussion. Understanding local market dynamics and consumer behaviour is essential to driving meaningful and sustainable progress.", attr: "Ingrid Vivian B., Global Logistics professional — Sep 2025" },
+
+  // LINKEDIN — LATAM / INDUSTRY
+  { source: 'linkedin', theme: 'latam', color: '#2D5A3D', audience: 'OEM partners', text: "Greece had always been a blueprint country for Inchcape for many many years.", attr: "ILIAS KOSMAS, COO OPAP Group — Greece SME post, Oct 2025" },
+  { source: 'linkedin', theme: 'oem', color: '#B8860B', audience: 'Business community', text: "Great to see how integrated Digital is now! Good to see you Jorge Maldonado.", attr: "Dave Annels, Head of Ecommerce — Chile multi-brand model post, Dec 2025" },
+  { source: 'linkedin', theme: 'nev', color: '#B8860B', audience: 'Business community', text: "Great to see the focus on global automotive trends. The way Inchcape is leveraging its DAP and DXP platforms to personalise the NEV journey is a game-changer for markets like South America.", attr: "Dario Nocioni, Digital Commerce Executive — Dec 2025" },
+];
+
+// ─────────────────────────────────────
+// STATE
+// ─────────────────────────────────────
+let filters = { source: 'all', theme: 'all' };
+let openAudPair = null;
+let openTension = null;
+
+// ─────────────────────────────────────
+// NAV
+// ─────────────────────────────────────
+function switchView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'evidence') renderEvidence();
+  if (id === 'tensions') renderTensions();
+}
+
+// ─────────────────────────────────────
+// AUDIENCE CARDS
+// ─────────────────────────────────────
+function toggleAud(idx) {
+  const pair = Math.floor(idx / 2);
+  const detailId = 'aud-detail-' + (pair * 2) + '-' + (pair * 2 + 1);
+  const detail = document.getElementById(detailId);
+  const cards = document.querySelectorAll('.aud-card');
+
+  if (openAudPair === pair) {
+    detail.classList.remove('open');
+    cards[pair*2]?.classList.remove('open');
+    cards[pair*2+1]?.classList.remove('open');
+    openAudPair = null;
+  } else {
+    document.querySelectorAll('.aud-detail').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.aud-card').forEach(c => c.classList.remove('open'));
+    detail.classList.add('open');
+    cards[pair*2]?.classList.add('open');
+    cards[pair*2+1]?.classList.add('open');
+    openAudPair = pair;
+    // Scroll detail into view
+    setTimeout(() => detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
+}
+
+// ─────────────────────────────────────
+// TENSIONS
+// ─────────────────────────────────────
+function renderTensions() {
+  const container = document.getElementById('tension-list');
+  if (container.children.length > 0) return; // already rendered
+
+  TENSIONS.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'tension-row';
+    row.innerHTML = `
+      <div class="tension-header" onclick="toggleTension(${i}, this.closest('.tension-row'))">
+        <div class="tension-topic-label">${t.topic}</div>
+        <div class="tension-analyst-preview">${t.analystPreview}</div>
+        <div class="tension-linkedin-preview">${t.linkedinPreview}</div>
+        <div class="tension-toggle">+</div>
+      </div>
+      <div class="tension-body">
+        <div class="tension-body-inner">
+          <div class="tension-col">
+            <div class="tension-col-head">Analysts ask — verbatim</div>
+            ${t.analystQuotes.map(q => `
+              <div class="quote-card" style="border-color:var(--a1)">
+                <p>${q.text}</p>
+                <div class="attr">${q.attr}</div>
+              </div>`).join('')}
+          </div>
+          <div class="tension-col">
+            <div class="tension-col-head">LinkedIn says — verbatim</div>
+            ${t.linkedinQuotes.map(q => `
+              <div class="quote-card" style="border-color:var(--a3)">
+                <p>${q.text}</p>
+                <div class="attr">${q.attr}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="tension-gap-bar">
+          <strong>The gap</strong>${t.gap}
+        </div>
+      </div>`;
+    container.appendChild(row);
+  });
+}
+
+function toggleTension(i, row) {
+  const isOpen = row.classList.contains('open');
+  document.querySelectorAll('.tension-row').forEach(r => r.classList.remove('open'));
+  if (!isOpen) {
+    row.classList.add('open');
+    setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
+}
+
+// ─────────────────────────────────────
+// EVIDENCE BANK
+// ─────────────────────────────────────
+function setFilter(type, val, btn) {
+  filters[type] = val;
+  document.querySelectorAll(`[data-filter="${type}"]`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEvidence();
+}
+
+function renderEvidence() {
+  const grid = document.getElementById('evidence-grid');
+  const countEl = document.getElementById('evidence-count');
+  const q = document.getElementById('search-input').value.toLowerCase();
+
+  const filtered = EVIDENCE.filter(e => {
+    if (filters.source !== 'all' && e.source !== filters.source) return false;
+    if (filters.theme !== 'all' && e.theme !== filters.theme) return false;
+    if (q && !e.text.toLowerCase().includes(q) && !e.attr.toLowerCase().includes(q) && !e.audience.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  countEl.textContent = `${filtered.length} of ${EVIDENCE.length} quotes`;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="no-results">No quotes match your filters. Try adjusting the selection above.</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(e => {
+    const sourceLabel = e.source === 'analyst' ? 'Analyst Q&A' : 'LinkedIn';
+    const themeMap = { capital: 'Capital model', oem: 'OEM partnerships', latam: 'Chile & LatAm', china: 'Chinese OEMs', nev: 'NEV transition', people: 'People & culture' };
+    return `
+      <div class="ev-card" style="border-top-color:${e.color}">
+        <div class="ev-meta">
+          <span class="ev-tag" style="background:${e.color}22;color:${e.color}">${sourceLabel}</span>
+          <span class="ev-tag" style="background:#f0ece5;color:var(--mid)">${e.audience}</span>
+        </div>
+        <div class="ev-text">"${e.text}"</div>
+        <div class="ev-attr">${e.attr}</div>
+        <div class="ev-theme">${themeMap[e.theme] || e.theme}</div>
+      </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
